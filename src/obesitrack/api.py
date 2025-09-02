@@ -10,6 +10,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 import pandas as pd
 
+from obesitrack.drift import build_drift_report
 from obesitrack.models_sqlalchemy import Prediction
 from obesitrack.observability import init_tracing
 from .schemas import PredictIn, PredictOut, PredictRequest, PredictResponse
@@ -18,7 +19,7 @@ from .model import registry
 from .logging_conf import setup_logging
 
 from fastapi import APIRouter, Depends, HTTPException
-from .auth import get_current_user
+from .auth import get_current_user, require_admin
 import pandas as pd
 from .explain import ShapExplainerWrapper, _hash_payload
 
@@ -78,3 +79,17 @@ async def explain_shap(payload: dict, user = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return res
+
+@router.get("/drift/report")
+def drift_report(user = Depends(require_admin)):
+    # load baseline from file / bucket
+    baseline = pd.read_csv("data/baseline.csv")
+    # load last N predictions from DB (convert input_json -> dataframe)
+    preds = load_recent_predictions_from_db(limit=1000)  # implement helper
+    current_df = pd.DataFrame([p["input_json"] for p in preds])
+    report = build_drift_report(baseline, current_df)
+    return report.as_dict()  # or return minimal summary
+
+# Planifier un job (cron) pour générer des rapports réguliers et alerter si drift détecté.
+# Pour visualiser, Evidently fournit HTML export (report.save_html("drift_report.html")) — tu peux servir ce HTML via un endpoint sécurisé.
+# report.save_html("drift_report.html")  # Removed because 'report' is not defined in this scope

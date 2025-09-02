@@ -22,3 +22,10 @@ opentelemetry-exporter-otlp
 opentelemetry-instrumentation-psycopg2
 prometheus-client
 opentelemetry-instrumentation-logging
+
+
+shap==0.41.0
+joblib
+
+evidently==0.3.6
+pandas
