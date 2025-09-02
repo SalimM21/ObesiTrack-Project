@@ -22,7 +22,7 @@ Ce dépôt contient une API REST prête pour dev/prod qui sert un modèle ML mul
 - Docker & Docker Compose  
 - Helm 3  
 - Un registry Docker (Docker Hub) et secrets CI configurés  
-- (Optionnel) Redis si tu veux du rate-limiting distribué  
+<!-- - (Optionnel) Redis si tu veux du rate-limiting distribué   -->
 
 ---
 
