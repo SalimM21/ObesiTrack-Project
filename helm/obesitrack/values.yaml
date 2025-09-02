@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: yourdockerhubusername/obesitrack
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+env:
+  SECRET_KEY: "changeme"
+  DATABASE_URL: "postgresql://obesitrack:obesipass@postgres.obesitrack.svc.cluster.local:5432/obesitrack"
+  MODEL_DIR: "/app/models"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
