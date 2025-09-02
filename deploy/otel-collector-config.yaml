@@ -5,6 +5,8 @@ receivers:
       http:
 
 exporters:
+  logging:
+    loglevel: debug
   prometheus:
     endpoint: "0.0.0.0:9464"
 
@@ -13,3 +15,6 @@ service:
     metrics:
       receivers: [otlp]
       exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      exporters: [logging]
