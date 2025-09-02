@@ -1,6 +1,3 @@
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
-
 from functools import update_wrapper, wraps
 from types import MethodType
 
@@ -26,7 +23,7 @@ class _AvailableIfDescriptor:
 
     def _check(self, obj, owner):
         attr_err_msg = (
-            f"This {owner.__name__!r} has no attribute {self.attribute_name!r}"
+            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
         )
         try:
             check_result = self.check(obj)

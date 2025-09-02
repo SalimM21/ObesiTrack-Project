@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: obesitrack
+      POSTGRES_PASSWORD: obesipass
+      POSTGRES_DB: obesitrack
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    depends_on:
+      - db
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models:ro
+      - ./src:/app/src
+    command: uvicorn src.obesitrack.api:app --host 0.0.0.0 --port 8000 --reload
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:

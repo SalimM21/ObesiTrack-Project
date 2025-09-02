@@ -1,4 +1,3 @@
-import itertools
 from unittest.mock import Mock
 
 import numpy as np
@@ -29,7 +28,7 @@ from sklearn.utils.fixes import (
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 
 try:
-    from pyamg import smoothed_aggregation_solver  # noqa: F401
+    from pyamg import smoothed_aggregation_solver  # noqa
 
     pyamg_available = True
 except ImportError:
@@ -55,7 +54,7 @@ S, true_labels = make_blobs(
 
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """Check array A and B are equal with possible sign flipping on
-    each column"""
+    each columns"""
     tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
         assert (
@@ -72,7 +71,7 @@ def test_sparse_graph_connected_component(coo_container):
     p = rng.permutation(n_samples)
     connections = []
 
-    for start, stop in itertools.pairwise(boundaries):
+    for start, stop in zip(boundaries[:-1], boundaries[1:]):
         group = p[start:stop]
         # Connect all elements within the group at least once via an
         # arbitrary path that spans the group.
@@ -92,7 +91,7 @@ def test_sparse_graph_connected_component(coo_container):
     affinity = coo_container((data, (row_idx, column_idx)))
     affinity = 0.5 * (affinity + affinity.T)
 
-    for start, stop in itertools.pairwise(boundaries):
+    for start, stop in zip(boundaries[:-1], boundaries[1:]):
         component_1 = _graph_connected_component(affinity, p[start])
         component_size = stop - start
         assert component_1.sum() == component_size
@@ -245,6 +244,22 @@ def test_spectral_embedding_callable_affinity(sparse_container, seed=36):
     _assert_equal_with_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
+# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of np.float
+@pytest.mark.filterwarnings(
+    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
+)
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
@@ -304,8 +319,26 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
             se_amg.fit_transform(affinity)
 
 
+# TODO: Remove filterwarnings when pyamg does replaces sp.rand call with
+# np.random.rand:
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of np.float
+@pytest.mark.filterwarnings(
+    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
@@ -327,6 +360,7 @@ def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
         _assert_equal_with_sign_flipping(embedding, new_embedding, tol=0.05)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will change in version 0.22")
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
@@ -475,6 +509,10 @@ def test_error_pyamg_not_available():
         se_precomp.fit_transform(S)
 
 
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.parametrize("solver", ["arpack", "amg", "lobpcg"])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_spectral_eigen_tol_auto(monkeypatch, solver, csr_container):

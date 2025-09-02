@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, conint, confloat
-from typing import Literal
+from pydantic import BaseModel, Field, conint, confloat, EmailStr
+from typing import Literal, Dict, Any
 
 
 YesNo = Literal["yes", "no"]
@@ -46,3 +46,31 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
 	username: str | None = None
+	
+class RegisterIn(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class PredictIn(BaseModel):
+    age: int = Field(..., ge=5, le=100)
+    height: float
+    weight: float
+    # ... autres champs comme précédemment
+
+class PredictOut(BaseModel):
+    label: str
+    probabilities: Dict[str, float]
+    model_name: str | None = None
+    model_version: str | None = None
+
+class PredictionRow(BaseModel):
+    id: str
+    input_json: Dict[str, Any]
+    predicted_label: str
+    probabilities: Dict[str, float]
+    created_at: str

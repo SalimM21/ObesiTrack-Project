@@ -27,3 +27,22 @@ app = FastAPI(title="ObesiTrack API", version="1.0.0", middleware=middleware)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.state
 
+@app.post("/predict", response_model=PredictOut)
+async def predict(payload: PredictIn, user=Depends(get_current_user), db=Depends(get_db_session)):
+    df = pd.DataFrame([payload.model_dump()])
+    bundle = registry.load()
+    probs = bundle.predict_proba(df)[0]
+    classes = list(bundle.classifier.classes_)
+    prob_map = {c: float(p) for c, p in zip(classes, probs)}
+    label = classes[int(probs.argmax())]
+    # persist
+    pred = Prediction(
+        user_id=user.id,
+        input_json=payload.model_dump(),
+        predicted_label=label,
+        probabilities=prob_map,
+        model_name=str(bundle.classifier.__class__.__name__),
+        model_version=getattr(bundle.classifier, "version", "v1")
+    )
+    db.add(pred); db.commit()
+    return PredictOut(label=label, probabilities=prob_map, model_name=pred.model_name, model_version=pred.model_version)
