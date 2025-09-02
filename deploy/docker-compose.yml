@@ -1,36 +1,76 @@
-version: "3.8"
-services:
-  db:
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_USER: obesitrack
-      POSTGRES_PASSWORD: obesipass
-      POSTGRES_DB: obesitrack
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+version: "3.9"
 
+services:
+  # ---------------------
+  # API FastAPI
+  # ---------------------
   api:
     build: .
-    depends_on:
-      - db
-    env_file: .env
+    container_name: obesitrack_api
     ports:
       - "8000:8000"
-    volumes:
-      - ./models:/app/models:ro
-      - ./src:/app/src
-    command: uvicorn src.obesitrack.api:app --host 0.0.0.0 --port 8000 --reload
-
-  pgadmin:
-    image: dpage/pgadmin4
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      - DATABASE_URL=postgresql://user:password@db:5432/obesitrack
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - db
+      - otel-collector
+
+  # ---------------------
+  # PostgreSQL
+  # ---------------------
+  db:
+    image: postgres:14
+    container_name: obesitrack_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: obesitrack
     ports:
-      - "8080:80"
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # ---------------------
+  # OpenTelemetry Collector
+  # ---------------------
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel_collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # gRPC
+      - "55681:55681" # OTLP/HTTP
+    depends_on:
+      - prometheus
+
+  # ---------------------
+  # Prometheus
+  # ---------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  # ---------------------
+  # Grafana
+  # ---------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
 
 volumes:
-  pgdata:
+  pg_data:
