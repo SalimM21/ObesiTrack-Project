@@ -1,7 +1,9 @@
 """Univariate features selection."""
 
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
+# Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
+#          L. Buitinck, A. Joly
+# License: BSD 3 clause
+
 
 import warnings
 from numbers import Integral, Real
@@ -15,7 +17,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted, validate_data
+from ..utils.validation import check_is_fitted
 from ._base import SelectorMixin
 
 
@@ -158,13 +160,13 @@ def f_classif(X, y):
     ... )
     >>> f_statistic, p_values = f_classif(X, y)
     >>> f_statistic
-    array([2.21e+02, 7.02e-01, 1.70e+00, 9.31e-01,
-           5.41e+00, 3.25e-01, 4.71e-02, 5.72e-01,
-           7.54e-01, 8.90e-02])
+    array([2.2...e+02, 7.0...e-01, 1.6...e+00, 9.3...e-01,
+           5.4...e+00, 3.2...e-01, 4.7...e-02, 5.7...e-01,
+           7.5...e-01, 8.9...e-02])
     >>> p_values
-    array([7.14e-27, 4.04e-01, 1.96e-01, 3.37e-01,
-           2.21e-02, 5.70e-01, 8.29e-01, 4.51e-01,
-           3.87e-01, 7.66e-01])
+    array([7.1...e-27, 4.0...e-01, 1.9...e-01, 3.3...e-01,
+           2.2...e-02, 5.7...e-01, 8.2...e-01, 4.5...e-01,
+           3.8...e-01, 7.6...e-01])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -202,11 +204,8 @@ def chi2(X, y):
 
     This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only **non-negative integer feature values** such as booleans or frequencies
+    contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
-
-    If some of your features are continuous, you need to bin them, for
-    example by using :class:`~sklearn.preprocessing.KBinsDiscretizer`.
 
     Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
@@ -253,9 +252,9 @@ def chi2(X, y):
     >>> y = np.array([1, 1, 0, 0, 2, 2])
     >>> chi2_stats, p_values = chi2(X, y)
     >>> chi2_stats
-    array([15.3,  6.5       ,  8.9])
+    array([15.3...,  6.5       ,  8.9...])
     >>> p_values
-    array([0.000456, 0.0387, 0.0116 ])
+    array([0.0004..., 0.0387..., 0.0116... ])
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -359,7 +358,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
     ... )
     >>> r_regression(X, y)
-    array([-0.157,  1.        , -0.229])
+    array([-0.15...,  1.        , -0.22...])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"], dtype=np.float64)
     n_samples = X.shape[0]
@@ -492,9 +491,9 @@ def f_regression(X, y, *, center=True, force_finite=True):
     ... )
     >>> f_statistic, p_values = f_regression(X, y)
     >>> f_statistic
-    array([1.21, 2.67e13, 2.66])
+    array([1.2...+00, 2.6...+13, 2.6...+00])
     >>> p_values
-    array([0.276, 1.54e-283, 0.11])
+    array([2.7..., 1.5..., 1.0...])
     """
     correlation_coefficient = r_regression(
         X, y, center=center, force_finite=force_finite
@@ -558,10 +557,10 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
             Returns the instance itself.
         """
         if y is None:
-            X = validate_data(self, X, accept_sparse=["csr", "csc"])
+            X = self._validate_data(X, accept_sparse=["csr", "csc"])
         else:
-            X, y = validate_data(
-                self, X, y, accept_sparse=["csr", "csc"], multi_output=True
+            X, y = self._validate_data(
+                X, y, accept_sparse=["csr", "csc"], multi_output=True
             )
 
         self._check_params(X, y)
@@ -580,11 +579,8 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.required = True
-        tags.input_tags.sparse = True
-        return tags
+    def _more_tags(self):
+        return {"requires_y": True}
 
 
 ######################################################################
@@ -689,10 +685,8 @@ class SelectPercentile(_BaseFilter):
             mask[kept_ties] = True
         return mask
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.required = False
-        return tags
+    def _more_tags(self):
+        return {"requires_y": False}
 
 
 class SelectKBest(_BaseFilter):
@@ -800,10 +794,8 @@ class SelectKBest(_BaseFilter):
             mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.target_tags.required = False
-        return tags
+    def _more_tags(self):
+        return {"requires_y": False}
 
 
 class SelectFpr(_BaseFilter):
@@ -1154,10 +1146,8 @@ class GenericUnivariateSelect(_BaseFilter):
 
         return selector
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
-        return tags
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
     def _check_params(self, X, y):
         self._make_selector()._check_params(X, y)

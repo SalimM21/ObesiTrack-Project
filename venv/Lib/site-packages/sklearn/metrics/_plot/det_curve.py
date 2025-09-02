@@ -1,7 +1,3 @@
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
-
-import numpy as np
 import scipy as sp
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
@@ -9,16 +5,13 @@ from .._ranking import det_curve
 
 
 class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
-    """Detection Error Tradeoff (DET) curve visualization.
+    """DET curve visualization.
 
-    It is recommended to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
+    It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
     or :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` to create a
     visualizer. All parameters are stored as attributes.
 
-    For general information regarding `scikit-learn` visualization tools, see
-    the :ref:`Visualization Guide <visualizations>`.
-    For guidance on interpreting these plots, refer to the
-    :ref:`Model Evaluation Guide <det_curve>`.
+    Read more in the :ref:`User Guide <visualizations>`.
 
     .. versionadded:: 0.24
 
@@ -90,7 +83,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y,
         *,
         sample_weight=None,
-        drop_intermediate=True,
         response_method="auto",
         pos_label=None,
         name=None,
@@ -99,10 +91,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot DET curve given an estimator and data.
 
-        For general information regarding `scikit-learn` visualization tools, see
-        the :ref:`Visualization Guide <visualizations>`.
-        For guidance on interpreting these plots, refer to the
-        :ref:`Model Evaluation Guide <det_curve>`.
+        Read more in the :ref:`User Guide <visualizations>`.
 
         .. versionadded:: 1.0
 
@@ -120,13 +109,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
-
-        drop_intermediate : bool, default=True
-            Whether to drop thresholds where true positives (tp) do not change
-            from the previous or subsequent threshold. All points with the same
-            tp value have the same `fnr` and thus same y coordinate.
-
-            .. versionadded:: 1.7
 
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
@@ -191,7 +173,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_true=y,
             y_pred=y_pred,
             sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate,
             name=name,
             ax=ax,
             pos_label=pos_label,
@@ -205,7 +186,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y_pred,
         *,
         sample_weight=None,
-        drop_intermediate=True,
         pos_label=None,
         name=None,
         ax=None,
@@ -213,10 +193,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot the DET curve given the true and predicted labels.
 
-        For general information regarding `scikit-learn` visualization tools, see
-        the :ref:`Visualization Guide <visualizations>`.
-        For guidance on interpreting these plots, refer to the
-        :ref:`Model Evaluation Guide <det_curve>`.
+        Read more in the :ref:`User Guide <visualizations>`.
 
         .. versionadded:: 1.0
 
@@ -232,13 +209,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
-
-        drop_intermediate : bool, default=True
-            Whether to drop thresholds where true positives (tp) do not change
-            from the previous or subsequent threshold. All points with the same
-            tp value have the same `fnr` and thus same y coordinate.
-
-            .. versionadded:: 1.7
 
         pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
@@ -293,7 +263,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_pred,
             pos_label=pos_label,
             sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate,
         )
 
         viz = cls(
@@ -330,14 +299,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
-
-        # We have the following bounds:
-        # sp.stats.norm.ppf(0.0) = -np.inf
-        # sp.stats.norm.ppf(1.0) = np.inf
-        # We therefore clip to eps and 1 - eps to not provide infinity to matplotlib.
-        eps = np.finfo(self.fpr.dtype).eps
-        self.fpr = self.fpr.clip(eps, 1 - eps)
-        self.fnr = self.fnr.clip(eps, 1 - eps)
 
         (self.line_,) = self.ax_.plot(
             sp.stats.norm.ppf(self.fpr),
