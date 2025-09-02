@@ -1,112 +1,110 @@
-# ObesiTrack-Project
+# ObesiTrack : API Sécurisée de Prédiction de l’Obésité avec FastAPI et Docker
 
-**ObesiTrack** — API sécurisée de prédiction de l’obésité (FastAPI + JWT + PostgreSQL + Docker + Helm).  
-Ce dépôt contient une API REST prête pour dev/prod qui sert un modèle ML multiclasses pour prédire une catégorie d'obésité, avec : authentification JWT, persistance Postgres, tracing (OpenTelemetry), métriques Prometheus, endpoints d’explicabilité (SHAP) et suivi de drift (Evidently).  
+**ObesiTrack** est une solution complète qui associe intelligence artificielle, sécurité des données et portabilité pour répondre aux besoins croissants des institutions de santé et des chercheurs dans la lutte contre l’obésité.  
 
----
+L’application repose sur un modèle de Machine Learning multiclasses capable de prédire différents niveaux d’obésité à partir de variables socio-démographiques et comportementales (âge, habitudes alimentaires, activité physique, etc.).  
 
-## 📂 Contenu du dépôt
-- `src/obesitrack/` : code FastAPI (API, auth, models, DB, monitoring, explainability)  
-- `models/` : artefacts ML (`preprocessor.joblib`, `classifier.joblib`)  
-- `docker-compose.yml` : dev (API + PostgreSQL + PgAdmin)  
-- `Dockerfile` : image API  
-- `helm/obesitrack/` : Helm chart minimal  
-- `.github/workflows/ci.yml` : CI (lint + tests + build & push image)  
-- `requirements.txt` : dépendances Python  
-- `README.md` : ce document  
+Elle expose ses fonctionnalités via une API REST moderne développée avec **FastAPI**, enrichie d’une authentification sécurisée **JWT** garantissant la confidentialité des utilisateurs, et d’une base **PostgreSQL** pour gérer comptes et historiques de prédictions.  
 
 ---
 
-## Prérequis
+## 📦 Contenu du dépôt
+- `src/obesitrack/` : code FastAPI (API, auth, models, DB, monitoring, explainability).  
+- `models/` : artefacts ML (`preprocessor.joblib`, `classifier.joblib`).  
+- `docker-compose.yml` : environnement de dev (API + Postgres + Grafana + Prometheus + otel-collector).  
+- `Dockerfile` : image API.  
+- `helm/obesitrack/` : Helm chart minimal.  
+- `.github/workflows/ci.yml` : pipeline CI/CD (lint + tests + build & push Docker image).  
+- `requirements.txt` : dépendances Python.  
+- `README.md` : ce document.  
+
+---
+
+##  Prérequis
 - Python 3.10+  
 - Docker & Docker Compose  
 - Helm 3  
-- Un registry Docker (Docker Hub) et secrets CI configurés  
-<!-- - (Optionnel) Redis si tu veux du rate-limiting distribué   -->
+- Compte Docker Hub et secrets CI configurés  
+- (Optionnel) Redis pour rate-limiting distribué  
 
 ---
 
-## ⚙️ Installation & exécution locale (dev)
-
-1. **Cloner le repo :**
+## ⚡ Installation & exécution locale (dev)
+1. Cloner le repo :  
 ```bash
 git clone <repo> obesitrack && cd obesitrack
 ```
 
-2. **Construire l’environnement et lancer via Docker Compose (inclut Postgres) :**
+2. Construire l’environnement et lancer via Docker Compose :  
 ```bash
 docker compose up --build
 ```
- API disponible sur [http://localhost:8000](http://localhost:8000)  
- Docs Swagger : [http://localhost:8000/docs](http://localhost:8000/docs)  
 
-3. **(Optionnel) Entraîner et sérialiser le modèle localement :**
+- API : http://localhost:8000  
+- Docs Swagger : http://localhost:8000/docs  
+- Grafana : http://localhost:3000 (admin/admin)  
+
+3. (Optionnel) Entraîner et sérialiser le modèle :  
 ```bash
 python train.py --dataset data/obesity_levels.csv --model-dir models
 ```
 
 ---
 
-##  Endpoints clés
-
-- `POST /auth/register` — inscription utilisateur  
-- `POST /auth/token` — login (OAuth2 form data) → JWT  
+## 🌐 Endpoints principaux
+- `POST /auth/register` — créer un compte  
+- `POST /auth/token` — login (OAuth2) → JWT  
 - `GET /auth/me` — profil courant  
-- `POST /predict` — prédiction (auth requise) + enregistrement résultat  
-- `GET /predictions` — historique personnel (paginé)  
-- `GET /metrics` — infos du modèle  
+- `POST /predict` — prédiction (auth requise) — sauvegarde dans DB  
+- `GET /predictions` — historique personnel  
+- `GET /metrics` — métriques Prometheus  
 - `GET /health` — health check  
-- `POST /explain/shap` — explication SHAP (auth + rate-limit)  
-- `GET /drift/report` — état drift (rapport Evidently JSON)  
+- `POST /explain/shap` — explication SHAP  
+- `GET /drift/report` — suivi drift (Evidently report)  
 
 ---
 
-##  Observabilité & monitoring
-
-- **Tracing** : OpenTelemetry (OTLP exporter configurable)  
-- **Metrics** : exposition Prometheus sur `/metrics`  
-- **Dashboard** : Grafana (JSON minimal disponible dans `docs/grafana-dashboard.json`)  
-
----
-
-##  CI / CD
-
-- `.github/workflows/ci.yml` :  
-  - Lint (flake8)  
-  - Tests (pytest)  
-  - Docker build & push (utilise secrets DockerHub)  
+##  Observabilité & Monitoring
+- **Tracing** : OpenTelemetry (OTLP exporter).  
+- **Metrics** : exposition Prometheus sur `/metrics`.  
+- **Dashboard** : Grafana (importer `docs/grafana-dashboard.json`).  
 
 ---
 
-##  Helm chart (Kubernetes)
+## ⚙️ CI/CD (GitHub Actions)
+- Lint (flake8).  
+- Tests (pytest).  
+- Build & Push image Docker sur Docker Hub.  
+- Export automatique du dashboard Grafana JSON.  
 
-Fichiers prêts dans `helm/obesitrack/` pour une installation simple :  
+---
+
+##  Déploiement Kubernetes
+Helm chart minimal inclus :  
 ```bash
 helm install obesitrack helm/obesitrack --namespace obesitrack --create-namespace
 ```
 
 ---
 
-##  Explicabilité & Drift
-
-- **SHAP** : endpoint `/explain/shap` → génère des valeurs d’importance (limitées & mises en cache)  
-- **Evidently** : script baseline + endpoint `/drift/report` (JSON de détection de drift)  
+## 🧩 Explicabilité & Drift
+- Endpoint SHAP : valeurs d’importance des features.  
+- Evidently : génération de rapport JSON de dérive des données.  
 
 ---
 
-##  Conseils de production
-
-- Stocker secrets dans Vault / Azure KeyVault / GCP Secret Manager  
-- HTTPS + Ingress (Traefik / Nginx) + WAF  
-- Mettre en place des backups PostgreSQL  
-- Scanner sécurité (SAST / DAST)  
+## 🔒 Conseils de production
+- Gérer secrets avec Vault/Azure KeyVault/GCP Secret Manager.  
+- Ajouter HTTPS + Ingress (Traefik / Nginx).  
+- Configurer backups Postgres.  
+- Intégrer scanner sécurité (SAST/DAST).  
 
 ---
 
 ##  Références
-
 - [FastAPI](https://fastapi.tiangolo.com)  
 - [OpenTelemetry](https://opentelemetry.io)  
-- [Prometheus](https://prometheus.io) / [Grafana](https://grafana.com)  
+- [Prometheus](https://prometheus.io)  
+- [Grafana](https://grafana.com)  
 - [SHAP](https://github.com/slundberg/shap)  
 - [Evidently](https://github.com/evidentlyai/evidently)  

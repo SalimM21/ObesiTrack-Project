@@ -3,6 +3,8 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+
+from obesitrack.models_sqlalchemy import User
 from .config import settings  # pydantic settings with SECRET_KEY, ALGORITHM, EXPIRE_MINUTES
 from .db import get_db_session  # Import get_db_session from your db module
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
