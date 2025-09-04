@@ -1,4 +1,5 @@
 import json
+import os
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
@@ -42,6 +43,20 @@ init_tracing(app, service_name="obesitrack", otlp_endpoint=os.getenv("OTEL_EXPOR
 router = APIRouter()
 # assume global explainer is loaded at app startup
 GLOBAL_EXPLAINER: ShapExplainerWrapper = None
+
+# ----------------------------------------
+templates = Jinja2Templates(directory="src/obesitrack/templates")
+
+@app.get("/register", response_class=HTMLResponse)
+def register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+# -------------------------------
+
 
 @app.post("/predict", response_model=PredictOut)
 async def predict(payload: PredictIn, user=Depends(get_current_user), db=Depends(get_db_session)):
