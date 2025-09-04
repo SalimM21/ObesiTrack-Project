@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inscription ObesiTrack</title>
+</head>
+<body>
+  <h1>Créer un compte</h1>
+  <form id="register-form">
+    <input type="text" name="name" placeholder="Nom">
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Mot de passe" required>
+    <button type="submit">S’inscrire</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('register-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form));
+      const res = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      alert(await res.json().detail);
+    });
+  </script>
+</body>
+</html>
