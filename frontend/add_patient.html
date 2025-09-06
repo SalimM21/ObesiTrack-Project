@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Nouvelle Prédiction - Détection Diabète</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Nouvelle prédiction</h1>
+    <nav>
+      <a href="dashboard.html">Mon Tableau de Bord</a>
+      <a href="index.html" onclick="logout()">Déconnexion</a>
+    </nav>
+  </header>
+
+  <main>
+    <form id="prediction-form">
+      <label>Âge</label>
+      <input type="number" name="age" required>
+
+      <label>Fréquence de consommation de légumes (FCVC)</label>
+      <input type="number" step="0.1" name="fcvc" required>
+
+      <!-- autres champs : poids, taille, IMC, etc. -->
+      <button type="submit">Obtenir une prédiction</button>
+    </form>
+
+    <div id="prediction-result"></div>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

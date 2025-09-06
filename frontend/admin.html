@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestion Utilisateurs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+    <h1>Prédiction de l’Obésité - Espace Administrateur</h1>
+    <nav>
+        <a href="dashboard.html">Tableau de bord</a>
+        <a href="index.html" onclick="logout()">Déconnexion</a>
+    </nav>
+</header>
+
+<main>
+    <h2>Liste des utilisateurs</h2>
+
+    <!-- Filtre par date -->
+    <label for="filter-date">Filtrer par date de création :</label>
+    <input type="date" id="filter-date">
+
+    <!-- Tableau des utilisateurs -->
+    <table id="users-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Date création</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- rempli dynamiquement via app.js -->
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <button id="prev-page">Précédent</button>
+        <span id="page-info"></span>
+        <button id="next-page">Suivant</button>
+    </div>
+
+</main>
+
+<footer>
+    © 2025 Prédiction de l’Obésité. Tous droits réservés.
+</footer>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>
