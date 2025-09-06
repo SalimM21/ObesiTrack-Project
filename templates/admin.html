@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gestion Utilisateurs - ObesiTrack</title>
+</head>
+<body>
+  <h1>Liste des utilisateurs</h1>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.id }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.role }}</td>
+        <td>
+          <button onclick="deleteUser({{ user.id }})">Supprimer</button>
+          <button onclick="toggleRole({{ user.id }})">Changer rôle</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <script>
+    async function deleteUser(userId) {
+      const res = await fetch(`/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt') }
+      });
+      alert(await res.json().detail);
+      location.reload();
+    }
+
+    async function toggleRole(userId) {
+      const res = await fetch(`/admin/users/${userId}/role`, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt') }
+      });
+      alert(await res.json().detail);
+      location.reload();
+    }
+  </script>
+</body>
+</html>

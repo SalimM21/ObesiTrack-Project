@@ -1,7 +1,11 @@
 import json
 import os
+import select
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from slowapi import Limiter
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.gzip import GZipMiddleware
@@ -11,12 +15,12 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 import pandas as pd
 
-from obesitrack.drift import build_drift_report
-from obesitrack.models_sqlalchemy import Prediction
-from obesitrack.observability import init_tracing
-from .schemas import PredictIn, PredictOut, PredictRequest, PredictResponse
-from .security import get_current_user, token_endpoint
-from .model import registry
+from drift import build_drift_report
+from models_sqlalchemy import Prediction, User
+from observability import init_tracing
+from schemas import PredictIn, PredictOut, PredictRequest, PredictResponse
+from security import get_current_user, token_endpoint
+from .models import registry
 from .logging_conf import setup_logging
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -24,6 +28,10 @@ from .auth import get_current_user, require_admin
 import pandas as pd
 from .explain import ShapExplainerWrapper, _hash_payload
 
+from fastapi import APIRouter, Depends
+from sqlmodel import select
+from db.session import async_session
+from db.models import User
 
 setup_logging()
 
@@ -44,6 +52,15 @@ router = APIRouter()
 # assume global explainer is loaded at app startup
 GLOBAL_EXPLAINER: ShapExplainerWrapper = None
 
+# --------------------------------------
+@router.get("/users")
+async def list_users():
+    async with async_session() as session:
+        result = await session.exec(select(User))
+        users = result.all()
+        return users
+
+
 # ----------------------------------------
 templates = Jinja2Templates(directory="src/obesitrack/templates")
 
@@ -56,8 +73,25 @@ def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 # -------------------------------
+@app.get("/predict-page", response_class=HTMLResponse)
+def predict_page(request: Request, user=Depends(get_current_user)):
+    return templates.TemplateResponse("predict.html", {"request": request, "user": user})
 
-
+@app.get("/history", response_class=HTMLResponse)
+def history_page(request: Request, user=Depends(get_current_user)):
+    predictions = get_user_predictions(user.id)
+    return templates.TemplateResponse(
+        "history.html",
+        {"request": request, "user": user, "predictions": predictions}
+    )
+@app.get("/admin/users-page", response_class=HTMLResponse)
+def admin_users_page(request: Request, admin=Depends(get_current_admin)):
+    users = get_all_users()
+    return templates.TemplateResponse(
+        "admin_users.html",
+        {"request": request, "admin": admin, "users": users}
+    )
+# ----------------------------------------
 @app.post("/predict", response_model=PredictOut)
 async def predict(payload: PredictIn, user=Depends(get_current_user), db=Depends(get_db_session)):
     df = pd.DataFrame([payload.model_dump()])
