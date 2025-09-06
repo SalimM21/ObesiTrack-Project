@@ -1,9 +1,10 @@
+from sqlite3 import SQLITE_LIMIT_COMPOUND_SELECT
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from obesitrack.db.database import SessionLocal
 from app.core.config import settings
 from session import AsyncSession
-from sqlmodel import SQLModel
+
 
 DATABASE_URL = settings.DATABASE_URL
 
@@ -15,7 +16,7 @@ async_session = sessionmaker(
 
 async def init_db():
     async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.run_sync(SQLITE_LIMIT_COMPOUND_SELECT.metadata.create_all)
 
 def get_db():
     db = SessionLocal()

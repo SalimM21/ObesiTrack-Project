@@ -1,8 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
-from obesitrack.main import app
 
-client = TestClient(app)
+import api
+
+
+client = TestClient(api.app)
 
 @pytest.fixture(autouse=True)
 def mock_shap(monkeypatch):

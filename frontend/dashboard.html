@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Tableau de bord - Détection Diabète</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Mon Tableau de Bord</h1>
+    <nav>
+      <a href="add_patient.html">Nouvelle Prédiction</a>
+      <a href="index.html" onclick="logout()">Déconnexion</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Historique de mes prédictions</h2>
+    <table id="history-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Âge</th>
+          <th>FCVC</th>
+          <th>Résultat</th>
+          <th>Probabilité</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- rempli par app.js -->
+      </tbody>
+    </table>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

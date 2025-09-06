@@ -4,6 +4,7 @@ from sklearn import metrics
 
 # Import des routes
 from app.api import auth, users, predictions
+from backend.app.services import predictor
 from obesitrack.db.session import init_db
 
 # Définir les métadonnées pour la doc Swagger
@@ -48,7 +49,7 @@ app.add_middleware(
 # Inclure les routes
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
-app.include_router(predictions.router, prefix="/predictions", tags=["Predictions"])
+app.include_router(predictor.router, prefix="/predictions", tags=["Predictions"])
 app.include_router(metrics.router, prefix="/metrics", tags=["Metrics"])
 
 

@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field, Column, JSON
+
 from typing import Optional
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL

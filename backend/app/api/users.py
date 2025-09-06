@@ -1,6 +1,7 @@
+
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from app.api.deps import get_current_user
-from sqlmodel import select
 from app.db.session import async_session
 from app.db.models import User
 

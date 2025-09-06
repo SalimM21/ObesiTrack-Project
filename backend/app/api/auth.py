@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import select
+from sqlalchemy import select
 from app.schemas.pydantic_models import UserCreate, Token
 from app.db.session import async_session
 from app.db.models import User
