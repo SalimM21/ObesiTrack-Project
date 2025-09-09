@@ -3,9 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sklearn import metrics
 
 # Import des routes
-from app.api import auth, users, predictions
-from backend.app.services import predictor
-from obesitrack.db.session import init_db
+from app.api import auth, users, predictions, metrics
 
 # Définir les métadonnées pour la doc Swagger
 tags_metadata = [
@@ -47,10 +45,10 @@ app.add_middleware(
 )
 
 # Inclure les routes
-app.include_router(auth.router, prefix="/auth", tags=["Auth"])
-app.include_router(users.router, prefix="/users", tags=["Users"])
-app.include_router(predictor.router, prefix="/predictions", tags=["Predictions"])
-app.include_router(metrics.router, prefix="/metrics", tags=["Metrics"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(users.router, prefix="/api", tags=["Users"])  # users router already has /users
+app.include_router(predictions.router, prefix="/api", tags=["Predictions"])  # predictions router has /predictions
+app.include_router(metrics.router, prefix="/api", tags=["Metrics"])  # exposes /api/metrics
 
 
 # Endpoint de test (healthcheck)
