@@ -1,7 +1,7 @@
 from sqlite3 import SQLITE_LIMIT_COMPOUND_SELECT
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlalchemy.orm import sessionmaker
-from obesitrack.db.database import SessionLocal
+from obesitdb.database import SessionLocal
 from app.core.config import settings
 from session import AsyncSession
 
