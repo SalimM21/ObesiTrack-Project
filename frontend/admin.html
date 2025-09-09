@@ -6,155 +6,394 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Gestion Utilisateurs</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
-    <header>
-        <h1>Prédiction de l’Obésité - Espace Administrateur</h1>
-        <nav>
-            <a href="dashboard.html">Tableau de bord</a>
-            <a href="index.html" onclick="logout()">Déconnexion</a>
-        </nav>
+    <header
+        style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#2196F3; color:white; flex-wrap:wrap;">
+        <h1 style="margin:0;">Prédiction de l’Obésité - Espace Administrateur</h1>
+
+        <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+            <button id="btnShowStats" class="btn btn-secondary">📊 Statistiques utilisateurs</button>
+            <button onclick="location.href='dashboard.html'" class="btn btn-secondary">📊 Tableau de bord</button>
+            <button onclick="location.href='index.html'" class="btn btn-danger">🚪 Déconnexion</button>
+
+            <div id="user-profile"
+                style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:8px;">
+                <img src="images/avatar.png" alt="Profil" style="width:40px; height:40px; border-radius:50%;">
+                <div style="line-height:1.2;">
+                    <div><strong>Dr. Salim MAJIDE</strong></div>
+                    <div style="font-size:0.85em;">Rôle : Administrateur</div>
+                </div>
+                <button class="btn btn-primary" onclick="editProfile()" style="padding:5px 10px; font-size:0.85em;">✏️
+                    Modifier</button>
+            </div>
+        </div>
     </header>
 
     <main>
-        <h2>Liste des utilisateurs</h2>
+        <!-- Section Tableau -->
+        <section id="tableSection">
+            <h2>Liste des utilisateurs</h2>
 
-        <!-- Filtre par date -->
-        <label for="filter-date">Filtrer par date de création :</label>
-        <input type="date" id="filter-date">
+            <!-- 🔍 Recherche et filtres -->
+            <div style="margin-bottom:15px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                <input type="text" id="search-input" placeholder="Rechercher par nom, email ou rôle...">
 
-        <!-- Tableau des utilisateurs -->
-        <table id="users-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Rôle</th>
-                    <th>Date création</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- rempli dynamiquement via app.js -->
-            </tbody>
-        </table>
+                <label for="filter-role">Rôle :</label>
+                <select id="filter-role">
+                    <option value="">Tous</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">Utilisateur</option>
+                </select>
 
-        <!-- Pagination -->
-        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-            <button id="prev-page">Précédent</button>
-            <span id="page-info"></span>
-            <button id="next-page">Suivant</button>
-        </div>
+                <label for="filter-date">Date de création :</label>
+                <input type="date" id="filter-date">
 
+                <button onclick="resetFilters()">Réinitialiser</button>
+            </div>
+
+            <!-- Tableau -->
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th onclick="sortTable('name')">Nom ⬍</th>
+                        <th>Email</th>
+                        <th onclick="sortTable('role')">Rôle ⬍</th>
+                        <th onclick="sortTable('created_at')">Date création ⬍</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- rempli par JS -->
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <button id="prev-page">Précédent</button>
+                <span id="page-info"></span>
+                <button id="next-page">Suivant</button>
+            </div>
+        </section>
+
+        <!-- Section Graphiques -->
+        <section id="charts" style="display:none; margin-top:30px;">
+            <h2>Statistiques des utilisateurs</h2>
+            <div style="margin-bottom:15px;">
+                <label for="chart-period">Période :</label>
+                <select id="chart-period">
+                    <option value="all">Tous les mois</option>
+                    <option value="last6">Derniers 6 mois</option>
+                    <option value="last3">Derniers 3 mois</option>
+                </select>
+            </div>
+
+            <div style="flex-wrap:wrap; gap:20px; justify-content:center;">
+                <canvas id="role-histogram" width="300" height="200"></canvas>
+                <canvas id="monthly-line" width="300" height="200"></canvas>
+            </div>
+        </section>
     </main>
+
+    <style>
+        .btn-edit {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-edit:hover {
+            background-color: #1976D2;
+        }
+
+        .btn-delete {
+            background-color: #F44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background-color: #D32F2F;
+        }
+
+        .badge-new {
+            background-color: #4CAF50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        @media print {
+
+            header,
+            nav,
+            footer,
+            #filter-role,
+            #filter-date,
+            #search-input,
+            button,
+            section {
+                display: none !important;
+            }
+
+            table {
+                border: 1px solid black;
+                width: 100%;
+            }
+        }
+    </style>
+
     <script>
-        // Exemple de données utilisateurs
+        // Données utilisateurs exemple
         const users = [
-            { id: 1, name: "Alice", email: "alice@example.com", role: "admin", created_at: "2025-01-12" },
-            { id: 2, name: "Bob", email: "bob@example.com", role: "user", created_at: "2025-03-05" },
-            { id: 3, name: "Charlie", email: "charlie@example.com", role: "user", created_at: "2025-04-18" },
-            { id: 4, name: "David", email: "david@example.com", role: "user", created_at: "2025-06-09" },
-            { id: 5, name: "Eva", email: "eva@example.com", role: "admin", created_at: "2025-02-28" },
-            { id: 6, name: "Frank", email: "frank@example.com", role: "user", created_at: "2025-05-12" },
-            { id: 7, name: "Grace", email: "grace@example.com", role: "user", created_at: "2025-07-01" },
-            { id: 8, name: "Hannah", email: "hannah@example.com", role: "user", created_at: "2025-03-21" },
-            { id: 9, name: "Ian", email: "ian@example.com", role: "user", created_at: "2025-04-10" },
-            { id: 10, name: "Julia", email: "julia@example.com", role: "admin", created_at: "2025-06-25" }
+            { id: 1, name: "Alice", email: "alice@example.com", role: "admin", created_at: "2025-09-03" },
+            { id: 2, name: "Bob", email: "bob@example.com", role: "user", created_at: "2025-09-01" },
+            { id: 3, name: "Charlie", email: "charlie@example.com", role: "user", created_at: "2025-08-20" },
+            { id: 4, name: "David", email: "david@example.com", role: "user", created_at: "2025-09-06" },
+            { id: 1, name: "Alice", email: "alice@example.com", role: "admin", created_at: "2025-01-15" },
+            { id: 2, name: "Bob", email: "bob@example.com", role: "user", created_at: "2025-02-10" },
+            { id: 3, name: "Charlie", email: "charlie@example.com", role: "user", created_at: "2025-03-05" },
+            { id: 4, name: "David", email: "david@example.com", role: "user", created_at: "2025-03-20" },
+            { id: 5, name: "Emma", email: "emma@example.com", role: "admin", created_at: "2025-04-02" },
+            { id: 6, name: "Fatima", email: "fatima@example.com", role: "user", created_at: "2025-05-12" },
+            { id: 7, name: "George", email: "george@example.com", role: "user", created_at: "2025-06-25" },
+            { id: 8, name: "Hugo", email: "hugo@example.com", role: "admin", created_at: "2025-07-08" },
+            { id: 9, name: "Isabelle", email: "isabelle@example.com", role: "user", created_at: "2025-08-16" },
+            { id: 10, name: "Jamal", email: "jamal@example.com", role: "user", created_at: "2025-09-01" }
         ];
 
         let currentPage = 1;
         const rowsPerPage = 5;
+        let currentSort = { key: null, asc: true };
 
         const tableBody = document.querySelector("#users-table tbody");
-        const pageInfo = document.getElementById("page-info");
+        const searchInput = document.getElementById("search-input");
+        const filterRole = document.getElementById("filter-role");
         const filterDate = document.getElementById("filter-date");
+
+        function isNewUser(dateStr) {
+            const created = new Date(dateStr);
+            const now = new Date();
+            const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+            return diffDays <= 7;
+        }
+
+        function applyFilters() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const role = filterRole.value;
+            const date = filterDate.value;
+
+            return users.filter(u => {
+                const matchesSearch =
+                    u.name.toLowerCase().includes(searchTerm) ||
+                    u.email.toLowerCase().includes(searchTerm) ||
+                    u.role.toLowerCase().includes(searchTerm);
+
+                const matchesRole = !role || u.role === role;
+                const matchesDate = !date || u.created_at === date;
+
+                return matchesSearch && matchesRole && matchesDate;
+            });
+        }
 
         function renderTable() {
             tableBody.innerHTML = "";
-            let filteredUsers = users;
-
-            // Filtrer par date si sélectionnée
-            if (filterDate.value) {
-                filteredUsers = users.filter(u => u.created_at === filterDate.value);
-            }
+            const filteredUsers = applyFilters();
 
             const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const pageUsers = filteredUsers.slice(start, end);
+            const pageUsers = filteredUsers.slice(start, start + rowsPerPage);
 
-            for (const user of pageUsers) {
+            pageUsers.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-        <td>${user.id}</td>
-        <td>${user.name}</td>
-        <td>${user.email}</td>
-        <td>${user.role}</td>
-        <td>${user.created_at}</td>
-        <td>
-          <button onclick="editUser(${user.id})">✏️ Éditer</button>
-          <button onclick="deleteUser(${user.id})">🗑️ Supprimer</button>
-        </td>
-      `;
+      <td>${user.id}</td>
+      <td>${user.name} ${isNewUser(user.created_at) ? '<span class="badge-new">Nouveau</span>' : ''}</td>
+      <td>${user.email}</td>
+      <td>${user.role}</td>
+      <td>${user.created_at}</td>
+      <td>
+        <button class="btn-edit" onclick="editUser(${user.id})">✏️ Éditer</button>
+        <button class="btn-delete" onclick="deleteUser(${user.id})">🗑️ Supprimer</button>
+      </td>
+    `;
                 tableBody.appendChild(tr);
-            }
+            });
 
-            // Mise à jour de la pagination
-            const totalPages = Math.ceil(filteredUsers.length / rowsPerPage) || 1;
-            pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
+            document.getElementById("page-info").textContent =
+                `Page ${currentPage} / ${Math.ceil(filteredUsers.length / rowsPerPage) || 1}`;
         }
 
-        function nextPage() {
-            const totalPages = Math.ceil(users.length / rowsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderTable();
-            }
-        }
+        function sortTable(key) {
+            if (currentSort.key === key) currentSort.asc = !currentSort.asc;
+            else { currentSort.key = key; currentSort.asc = true; }
 
-        function prevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                renderTable();
-            }
-        }
-
-        // Boutons pagination
-        document.getElementById("next-page").addEventListener("click", nextPage);
-        document.getElementById("prev-page").addEventListener("click", prevPage);
-
-        // Filtrage dynamique
-        filterDate.addEventListener("change", () => {
-            currentPage = 1; // revenir à la première page
+            users.sort((a, b) => {
+                let valA = a[key], valB = b[key];
+                if (key === "created_at") { valA = new Date(valA); valB = new Date(valB); }
+                if (valA < valB) return currentSort.asc ? -1 : 1;
+                if (valA > valB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
             renderTable();
-        });
-
-        // Fonctions fictives pour actions
-        function editUser(id) {
-            alert("Éditer l'utilisateur ID " + id);
         }
 
+        function resetFilters() {
+            searchInput.value = "";
+            filterRole.value = "";
+            filterDate.value = "";
+            currentPage = 1;
+            renderTable();
+        }
+
+        function editUser(id) { alert("Éditer l’utilisateur " + id); }
         function deleteUser(id) {
             if (confirm("Voulez-vous vraiment supprimer cet utilisateur ?")) {
                 const index = users.findIndex(u => u.id === id);
-                if (index !== -1) {
-                    users.splice(index, 1);
-                    renderTable();
-                }
+                if (index !== -1) { users.splice(index, 1); renderTable(); updateCharts(); }
             }
         }
 
-        // Initialiser la table
+        document.getElementById("prev-page").addEventListener("click", () => { if (currentPage > 1) { currentPage--; renderTable(); } });
+        document.getElementById("next-page").addEventListener("click", () => { if (currentPage * rowsPerPage < applyFilters().length) { currentPage++; renderTable(); } });
+
+        searchInput.addEventListener("input", () => { currentPage = 1; renderTable(); });
+        filterRole.addEventListener("change", () => { currentPage = 1; renderTable(); });
+        filterDate.addEventListener("change", () => { currentPage = 1; renderTable(); });
+
         renderTable();
+
+        function editProfile() {
+            const name = prompt("Modifier le nom :", "Salim Majide");
+            const role = prompt("Modifier le rôle :", "Administrateur");
+
+            if (name) document.querySelector("#user-profile strong").textContent = name;
+            if (role) document.querySelector("#user-profile div:nth-child(2)").textContent = `Rôle : ${role}`;
+        }
+
+        // Graphiques
+        function getMonthlyRegistrations(users) {
+            const months = Array.from({ length: 12 }, (_, i) => i + 1);
+            const monthlyCount = Array(12).fill(0);
+            users.forEach(u => {
+                const month = new Date(u.created_at).getMonth();
+                monthlyCount[month]++;
+            });
+            return { months, monthlyCount };
+        }
+
+        function updateCharts(period = "all") {
+            const roles = ["admin", "user"];
+            const roleCounts = roles.map(r => users.filter(u => u.role === r).length);
+
+            if (window.roleChart) window.roleChart.destroy();
+            const ctx1 = document.getElementById('role-histogram').getContext('2d');
+            window.roleChart = new Chart(ctx1, {
+                type: 'bar',
+                data: { labels: roles, datasets: [{ label: 'Nombre d’utilisateurs', data: roleCounts, backgroundColor: ['#2196F3', '#4CAF50'] }] },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+
+            let filteredUsers = users;
+            const now = new Date();
+            if (period === "last3") filteredUsers = users.filter(u => (now - new Date(u.created_at)) / (1000 * 60 * 60 * 24) <= 90);
+            if (period === "last6") filteredUsers = users.filter(u => (now - new Date(u.created_at)) / (1000 * 60 * 60 * 24) <= 180);
+
+            const { months, monthlyCount } = getMonthlyRegistrations(filteredUsers);
+
+            if (window.monthChart) window.monthChart.destroy();
+            const ctx2 = document.getElementById('monthly-line').getContext('2d');
+            window.monthChart = new Chart(ctx2, {
+                type: 'line',
+                data: { labels: months.map(m => `Mois ${m}`), datasets: [{ label: 'Inscriptions', data: monthlyCount, borderColor: '#FF9800', backgroundColor: 'rgba(255,152,0,0.2)', fill: true }] },
+                options: { responsive: true }
+            });
+        }
+
+        updateCharts();
+        document.getElementById('chart-period').addEventListener('change', e => updateCharts(e.target.value));
+
+        // 📊 Fonctions graphiques
+        function getMonthlyRegistrations(users) {
+            const monthlyCount = Array(12).fill(0);
+            users.forEach(u => {
+                const month = new Date(u.created_at).getMonth();
+                monthlyCount[month]++;
+            });
+            return monthlyCount;
+        }
+
+        function updateCharts(period = "all") {
+            // Histogramme par rôle
+            const roles = ["admin", "user"];
+            const roleCounts = roles.map(r => users.filter(u => u.role === r).length);
+
+            if (window.roleChart) window.roleChart.destroy();
+            window.roleChart = new Chart(document.getElementById('role-histogram'), {
+                type: 'bar',
+                data: {
+                    labels: roles,
+                    datasets: [{ label: 'Nombre d’utilisateurs', data: roleCounts, backgroundColor: ['#2196F3', '#4CAF50'] }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+
+            // Évolution mensuelle
+            let filteredUsers = users;
+            const now = new Date();
+            if (period === "last3") {
+                filteredUsers = users.filter(u => (now - new Date(u.created_at)) / (1000 * 60 * 60 * 24) <= 90);
+            }
+            if (period === "last6") {
+                filteredUsers = users.filter(u => (now - new Date(u.created_at)) / (1000 * 60 * 60 * 24) <= 180);
+            }
+
+            const monthlyCount = getMonthlyRegistrations(filteredUsers);
+
+            if (window.monthChart) window.monthChart.destroy();
+            window.monthChart = new Chart(document.getElementById('monthly-line'), {
+                type: 'line',
+                data: {
+                    labels: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"],
+                    datasets: [{ label: 'Inscriptions', data: monthlyCount, borderColor: '#FF9800', backgroundColor: 'rgba(255,152,0,0.2)', fill: true }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        updateCharts();
+
+        // 🎛 Toggle Statistiques/Tableau
+        const btnShowStats = document.getElementById("btnShowStats");
+        const chartsSection = document.getElementById("charts");
+        const tableSection = document.getElementById("tableSection");
+
+        btnShowStats.addEventListener("click", () => {
+            const isChartsHidden = chartsSection.style.display === "none";
+            chartsSection.style.display = isChartsHidden ? "block" : "none";
+            tableSection.style.display = isChartsHidden ? "none" : "block";
+            btnShowStats.textContent = isChartsHidden ? "⬅ Retour au tableau" : "📊 Statistiques utilisateurs";
+            (isChartsHidden ? chartsSection : tableSection).scrollIntoView({ behavior: "smooth" });
+        });
+
+        // 🎛 Changement période graphique
+        document.getElementById("chart-period").addEventListener("change", e => updateCharts(e.target.value));
     </script>
 
     <footer>
         © 2025 Prédiction de l’Obésité. Tous droits réservés.
     </footer>
-
-    <script src="js/app.js"></script>
 
 </body>
 

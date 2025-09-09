@@ -2,15 +2,100 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Prédiction de l’Obésité - Accueil</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prédiction de l’Obésité - Connexion</title>
+  <style>
+    /* Arrière-plan */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url("images/bg-login.jpg") no-repeat center center/cover;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Conteneur */
+    main {
+      background: rgba(255, 255, 255, 0.92);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin-bottom: 20px;
+      font-size: 1.8em;
+      color: #1976D2;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      font-size: 1.3em;
+      color: #444;
+    }
+
+    /* Champs formulaire */
+    form input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: 0.3s;
+    }
+
+    form input:focus {
+      border-color: #1976D2;
+      box-shadow: 0 0 5px rgba(25,118,210,0.5);
+      outline: none;
+    }
+
+    /* Bouton */
+    form button {
+      width: 100%;
+      padding: 12px;
+      background: #1976D2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    form button:hover {
+      background: #1259a7;
+    }
+
+    /* Texte sous le formulaire */
+    p {
+      margin-top: 15px;
+      font-size: 0.9em;
+    }
+
+    p a {
+      color: #1976D2;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    p a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Prédiction de l’Obésité</h1>
-  </header>
-
   <main>
+    <header>
+      <h1>Prédiction de l’Obésité</h1>
+    </header>
+
     <h2>Connexion</h2>
     <form id="login-form">
       <input type="text" name="username" placeholder="Nom d'utilisateur" required>
