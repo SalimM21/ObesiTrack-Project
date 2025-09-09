@@ -1,9 +1,13 @@
 
 from typing import Optional
 from datetime import datetime
+import uuid
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL
 from sqlalchemy.sql import func
 from .session import Base
+
+def gen_uuid():
+    return str(uuid.uuid4())
 
 class User(Base):
     __tablename__ = "users"
@@ -27,3 +31,5 @@ class Prediction(Base):
     result = Column(String(50))
     probability = Column(DECIMAL)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+

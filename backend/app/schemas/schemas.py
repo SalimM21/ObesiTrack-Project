@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, conint, confloat, EmailStr
-from typing import Literal, Dict, Any
+from typing import Literal, Dict, Any, Optional
 
 
 YesNo = Literal["yes", "no"]
@@ -74,3 +74,17 @@ class PredictionRow(BaseModel):
     predicted_label: str
     probabilities: Dict[str, float]
     created_at: str
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: Optional[str] = None
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenPayload(BaseModel):
+    sub: str
+    user_id: Optional[int] = None
+    role: Optional[str] = None
