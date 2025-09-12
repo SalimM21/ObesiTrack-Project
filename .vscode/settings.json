@@ -4,5 +4,10 @@
         "./backend/app/core",
         "./src/obesitrack/db",
         "./src/obesitrack"
+    ],
+    "cursorpyright.analysis.extraPaths": [
+        "./backend/app/core",
+        "./src/obesitrack/db",
+        "./src/obesitrack"
     ]
 }
