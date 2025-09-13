@@ -1,6 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from app.db.session import get_db
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 import json
 
 # Pour l'exemple, on stocke les métriques dans un dictionnaire.

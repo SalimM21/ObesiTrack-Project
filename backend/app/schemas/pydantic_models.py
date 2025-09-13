@@ -16,13 +16,23 @@ class TokenPayload(BaseModel):
     role: Optional[str] = None
 
 class PredictionIn(BaseModel):
-    # add your real features: age, glucose, bmi, etc.
+    # Features pour la prédiction d'obésité
     age: int
-    glucose: float
-    bmi: float
-    bloodpressure: float
-    pedigree: float
-    sex: Optional[str] = None
+    gender: str  # Male/Female
+    height: float
+    weight: float
+    family_history_with_overweight: str  # yes/no
+    favc: str  # yes/no (frequent consumption of high caloric food)
+    fcvc: int  # frequency of consumption of vegetables
+    ncp: int  # number of main meals
+    caec: str  # consumption of food between meals
+    smoke: str  # yes/no
+    ch2o: int  # consumption of water daily
+    scc: str  # calories consumption monitoring
+    faf: int  # physical activity frequency
+    tue: int  # time using technology devices
+    cal: int  # consumption of alcohol
+    mtrans: str  # transportation used
 
 class PredictionOut(BaseModel):
     result: str

@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
-from app.api.deps import get_current_user
+from app.core.dependencies import get_current_user
 from app.db.session import async_session
 from app.db.models import User
 
@@ -16,8 +16,8 @@ async def list_users(current_user=Depends(get_current_user)):
     admin_required(current_user)
     async with async_session() as session:
         q = select(User)
-        r = await session.exec(q)
-        return r.all()
+        result = await session.execute(q)
+        return result.scalars().all()
 
 @router.patch("/{user_id}/role")
 async def change_role(user_id: int, role: str, current_user=Depends(get_current_user)):

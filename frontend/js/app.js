@@ -1,5 +1,5 @@
 // === URL de l'API FastAPI ===
-const API_URL = "http://localhost:8000";
+const API_URL = "http://localhost:8001";
 
 // === Sauvegarder et récupérer le JWT ===
 function saveToken(token) {
@@ -19,9 +19,15 @@ async function apiRequest(endpoint, method = "GET", data = null, auth = false) {
     const headers = { "Content-Type": "application/json" };
     if (auth) {
         const token = getToken();
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
+        if (!token) {
+            throw new Error("Token d'authentification manquant. Veuillez vous connecter.");
         }
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    console.log(`🌐 Requête ${method} vers ${API_URL}${endpoint}`);
+    if (auth) {
+        console.log(`🔑 Token utilisé: ${getToken()?.substring(0, 20)}...`);
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
@@ -30,18 +36,33 @@ async function apiRequest(endpoint, method = "GET", data = null, auth = false) {
         body: data ? JSON.stringify(data) : null
     });
 
+    console.log(`📊 Réponse: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-        throw new Error(`Erreur ${response.status}: ${await response.text()}`);
+        const errorText = await response.text();
+        console.error(`❌ Erreur API: ${response.status} - ${errorText}`);
+        
+        if (response.status === 401) {
+            // Token expiré ou invalide
+            clearToken();
+            throw new Error("Session expirée. Veuillez vous reconnecter.");
+        }
+        
+        throw new Error(`Erreur ${response.status}: ${errorText}`);
     }
 
     return response.json();
 }
 
 // === INSCRIPTION ===
-async function registerUser(username, password) {
+async function registerUser(email, password, fullName) {
     try {
-        const result = await apiRequest("/auth/register", "POST", { username, password });
-        alert("Inscription réussie Vous pouvez maintenant vous connecter.");
+        const result = await apiRequest("/auth/signup", "POST", { 
+            email, 
+            password, 
+            full_name: fullName 
+        });
+        alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
         return result;
     } catch (err) {
         alert("Erreur d'inscription : " + err.message);
@@ -49,13 +70,28 @@ async function registerUser(username, password) {
 }
 
 // === CONNEXION ===
-async function loginUser(username, password) {
+async function loginUser(email, password) {
     try {
-        const result = await apiRequest("/auth/login", "POST", { username, password });
+        console.log("🔐 Tentative de connexion pour:", email);
+        const result = await apiRequest("/auth/login", "POST", { 
+            email, 
+            password 
+        });
+        
+        console.log("✅ Connexion réussie, token reçu:", result.access_token?.substring(0, 20) + "...");
         saveToken(result.access_token);
-        alert("Connexion réussie 🎉");
-        window.location.href = "dashboard.html"; // redirection après connexion
+        
+        // Vérifier que le token est bien sauvegardé
+        const savedToken = getToken();
+        if (savedToken) {
+            console.log("💾 Token sauvegardé avec succès");
+            alert("Connexion réussie 🎉");
+            window.location.href = "dashboard.html";
+        } else {
+            throw new Error("Erreur lors de la sauvegarde du token");
+        }
     } catch (err) {
+        console.error("❌ Erreur de connexion:", err);
         alert("Erreur de connexion : " + err.message);
     }
 }
@@ -70,23 +106,24 @@ function logoutUser() {
 // === ENVOYER DES DONNÉES POUR PREDICTION ===
 async function sendPrediction(data) {
     try {
-        const result = await apiRequest("/predictions", "POST", data, true);
+        const result = await apiRequest("/predictions/predict", "POST", data, true);
         console.log("Résultat prédiction :", result);
-        alert(`Prédiction : ${result.prediction} (probabilité : ${result.probability}%)`);
         return result;
     } catch (err) {
         alert("Erreur lors de la prédiction : " + err.message);
+        throw err;
     }
 }
 
 // === CONSULTER L'HISTORIQUE DES PREDICTIONS ===
 async function getHistory() {
     try {
-        const result = await apiRequest("/predictions/history", "GET", null, true);
+        const result = await apiRequest("/predictions/me", "GET", null, true);
         console.log("Historique :", result);
         return result;
     } catch (err) {
         alert("Erreur lors du chargement de l'historique : " + err.message);
+        return [];
     }
 }
 
