@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend-API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input, select { padding: 8px; margin: 5px; }
+        .result { margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de la liaison Frontend-API</h1>
+    
+    <div class="test-section">
+        <h2>1. Test de connexion à l'API</h2>
+        <button onclick="testApiConnection()">Tester la connexion</button>
+        <div id="api-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test d'inscription</h2>
+        <input type="text" id="test-email" placeholder="Email de test" value="test@example.com">
+        <input type="password" id="test-password" placeholder="Mot de passe" value="test123">
+        <input type="text" id="test-name" placeholder="Nom complet" value="Test User">
+        <button onclick="testRegister()">Tester l'inscription</button>
+        <div id="register-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test de connexion</h2>
+        <input type="email" id="login-email" placeholder="Email" value="test@example.com">
+        <input type="password" id="login-password" placeholder="Mot de passe" value="test123">
+        <button onclick="testLogin()">Tester la connexion</button>
+        <div id="login-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test de prédiction</h2>
+        <button onclick="testPrediction()">Tester une prédiction</button>
+        <div id="prediction-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Test de l'historique</h2>
+        <button onclick="testHistory()">Tester l'historique</button>
+        <div id="history-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Navigation vers les pages</h2>
+        <button onclick="window.open('index.html', '_blank')">Page de connexion</button>
+        <button onclick="window.open('register.html', '_blank')">Page d'inscription</button>
+        <button onclick="window.open('add_patient.html', '_blank')">Page de prédiction</button>
+        <button onclick="window.open('dashboard.html', '_blank')">Dashboard</button>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        async function testApiConnection() {
+            const resultDiv = document.getElementById('api-result');
+            try {
+                const response = await fetch('http://localhost:8001/');
+                const data = await response.json();
+                resultDiv.innerHTML = `<strong>✅ Succès:</strong> ${data.message}`;
+                resultDiv.parentElement.className = 'test-section success';
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        async function testRegister() {
+            const resultDiv = document.getElementById('register-result');
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            const name = document.getElementById('test-name').value;
+            
+            try {
+                const result = await registerUser(email, password, name);
+                resultDiv.innerHTML = `<strong>✅ Succès:</strong> Inscription réussie`;
+                resultDiv.parentElement.className = 'test-section success';
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                await loginUser(email, password);
+                resultDiv.innerHTML = `<strong>✅ Succès:</strong> Connexion réussie`;
+                resultDiv.parentElement.className = 'test-section success';
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        async function testPrediction() {
+            const resultDiv = document.getElementById('prediction-result');
+            
+            const testData = {
+                age: 25,
+                gender: "Male",
+                height: 1.75,
+                weight: 70,
+                family_history_with_overweight: "no",
+                favc: "no",
+                fcvc: 2.5,
+                ncp: 3,
+                caec: "sometimes",
+                smoke: "no",
+                ch2o: 2.5,
+                scc: "no",
+                faf: 1.5,
+                tue: 2.5,
+                cal: 0,
+                mtrans: "Public_Transportation"
+            };
+            
+            try {
+                const result = await sendPrediction(testData);
+                resultDiv.innerHTML = `<strong>✅ Succès:</strong> Prédiction: ${result.result}<br>Probabilités: ${JSON.stringify(result.probability)}`;
+                resultDiv.parentElement.className = 'test-section success';
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        async function testHistory() {
+            const resultDiv = document.getElementById('history-result');
+            
+            try {
+                const history = await getHistory();
+                resultDiv.innerHTML = `<strong>✅ Succès:</strong> ${history.length} prédictions trouvées<br>${JSON.stringify(history, null, 2)}`;
+                resultDiv.parentElement.className = 'test-section success';
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // Test automatique de la connexion au chargement
+        window.addEventListener('load', () => {
+            testApiConnection();
+        });
+    </script>
+</body>
+</html>

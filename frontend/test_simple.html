@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simple - Prédiction</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-group { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { padding: 8px; width: 200px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #1976D2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #1259a7; }
+        .result { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Simple de Prédiction</h1>
+    
+    <div id="auth-status" style="margin-bottom: 20px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+        <strong>Statut d'authentification :</strong> <span id="auth-text">Vérification...</span>
+    </div>
+
+    <form id="prediction-form">
+        <div class="form-group">
+            <label for="age">Âge :</label>
+            <input type="number" id="age" name="age" value="25" required>
+        </div>
+
+        <div class="form-group">
+            <label for="gender">Genre :</label>
+            <select id="gender" name="gender" required>
+                <option value="Male">Homme</option>
+                <option value="Female">Femme</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="height">Taille (m) :</label>
+            <input type="number" id="height" name="height" step="0.01" value="1.75" required>
+        </div>
+
+        <div class="form-group">
+            <label for="weight">Poids (kg) :</label>
+            <input type="number" id="weight" name="weight" step="0.1" value="70" required>
+        </div>
+
+        <div class="form-group">
+            <label for="family_history_with_overweight">Antécédents familiaux :</label>
+            <select id="family_history_with_overweight" name="family_history_with_overweight" required>
+                <option value="no">Non</option>
+                <option value="yes">Oui</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="favc">Aliments caloriques fréquents :</label>
+            <select id="favc" name="favc" required>
+                <option value="no">Non</option>
+                <option value="yes">Oui</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="fcvc">Fréquence légumes (1-3) :</label>
+            <input type="number" id="fcvc" name="fcvc" step="0.1" min="1" max="3" value="2.5" required>
+        </div>
+
+        <div class="form-group">
+            <label for="ncp">Nombre de repas (1-8) :</label>
+            <input type="number" id="ncp" name="ncp" min="1" max="8" value="3" required>
+        </div>
+
+        <div class="form-group">
+            <label for="caec">Aliments entre repas :</label>
+            <select id="caec" name="caec" required>
+                <option value="no">Jamais</option>
+                <option value="sometimes">Parfois</option>
+                <option value="frequently">Souvent</option>
+                <option value="always">Toujours</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="smoke">Fumez-vous ?</label>
+            <select id="smoke" name="smoke" required>
+                <option value="no">Non</option>
+                <option value="yes">Oui</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="ch2o">Consommation d'eau (0-10) :</label>
+            <input type="number" id="ch2o" name="ch2o" step="0.1" min="0" max="10" value="2.5" required>
+        </div>
+
+        <div class="form-group">
+            <label for="scc">Surveillance calories :</label>
+            <select id="scc" name="scc" required>
+                <option value="no">Non</option>
+                <option value="yes">Oui</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="faf">Activité physique (0-7) :</label>
+            <input type="number" id="faf" name="faf" step="0.1" min="0" max="7" value="1.5" required>
+        </div>
+
+        <div class="form-group">
+            <label for="tue">Temps écrans (0-24h) :</label>
+            <input type="number" id="tue" name="tue" step="0.1" min="0" max="24" value="2.5" required>
+        </div>
+
+        <div class="form-group">
+            <label for="cal">Consommation alcool (0-3) :</label>
+            <input type="number" id="cal" name="cal" min="0" max="3" value="0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="mtrans">Transport :</label>
+            <select id="mtrans" name="mtrans" required>
+                <option value="Public_Transportation">Transport public</option>
+                <option value="Automobile">Voiture</option>
+                <option value="Walking">Marche</option>
+                <option value="Bike">Vélo</option>
+                <option value="Motorbike">Moto</option>
+            </select>
+        </div>
+
+        <button type="submit" id="submit-btn">🔮 Faire une prédiction</button>
+    </form>
+
+    <div id="result" class="result" style="display: none;"></div>
+
+    <div style="margin-top: 30px;">
+        <h3>Actions :</h3>
+        <button onclick="window.location.href='index.html'">🔐 Se connecter</button>
+        <button onclick="window.location.href='register.html'">📝 S'inscrire</button>
+        <button onclick="testConnection()">🔗 Tester connexion API</button>
+        <button onclick="clearToken()">🚪 Se déconnecter</button>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Vérifier l'authentification au chargement
+        window.addEventListener('load', () => {
+            checkAuthStatus();
+        });
+
+        function checkAuthStatus() {
+            const token = getToken();
+            const authText = document.getElementById('auth-text');
+            const authStatus = document.getElementById('auth-status');
+            
+            if (token) {
+                authText.textContent = '✅ Connecté';
+                authStatus.style.background = '#d4edda';
+                authStatus.style.color = '#155724';
+            } else {
+                authText.textContent = '❌ Non connecté';
+                authStatus.style.background = '#f8d7da';
+                authStatus.style.color = '#721c24';
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost:8001/');
+                const data = await response.json();
+                alert('✅ API connectée: ' + data.message);
+            } catch (error) {
+                alert('❌ Erreur API: ' + error.message);
+            }
+        }
+
+        document.getElementById('prediction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = getToken();
+            if (!token) {
+                alert('❌ Vous devez être connecté pour faire une prédiction !');
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const predictionData = {
+                age: parseInt(formData.get('age')),
+                gender: formData.get('gender'),
+                height: parseFloat(formData.get('height')),
+                weight: parseFloat(formData.get('weight')),
+                family_history_with_overweight: formData.get('family_history_with_overweight'),
+                favc: formData.get('favc'),
+                fcvc: parseFloat(formData.get('fcvc')),
+                ncp: parseInt(formData.get('ncp')),
+                caec: formData.get('caec'),
+                smoke: formData.get('smoke'),
+                ch2o: parseFloat(formData.get('ch2o')),
+                scc: formData.get('scc'),
+                faf: parseFloat(formData.get('faf')),
+                tue: parseFloat(formData.get('tue')),
+                cal: parseInt(formData.get('cal')),
+                mtrans: formData.get('mtrans')
+            };
+
+            const resultDiv = document.getElementById('result');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Envoi...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '⏳ Envoi de la prédiction...';
+
+            try {
+                console.log('Données envoyées:', predictionData);
+                const result = await sendPrediction(predictionData);
+                console.log('Résultat reçu:', result);
+                
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h3>✅ Prédiction réussie !</h3>
+                    <p><strong>Résultat :</strong> ${result.result}</p>
+                    <p><strong>Probabilités :</strong></p>
+                    <ul>
+                        ${Object.entries(result.probability).map(([key, value]) => 
+                            `<li>${key}: ${(value * 100).toFixed(1)}%</li>`
+                        ).join('')}
+                    </ul>
+                `;
+            } catch (error) {
+                console.error('Erreur:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Erreur de prédiction</h3>
+                    <p>${error.message}</p>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🔮 Faire une prédiction';
+            }
+        });
+    </script>
+</body>
+</html>

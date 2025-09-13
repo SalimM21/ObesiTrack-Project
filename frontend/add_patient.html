@@ -209,16 +209,85 @@
     <!-- Formulaire -->
     <form id="prediction-form" style="flex:1; min-width:300px;">
       <label for="age">Âge</label>
-      <input type="number" id="age" name="age" min="0" max="120" placeholder="Entrez votre âge" required>
+      <input type="number" id="age" name="age" min="5" max="100" placeholder="Entrez votre âge" required>
 
-      <label for="fcvc">Fréquence de consommation de légumes (FCVC)</label>
-      <input type="number" id="fcvc" name="fcvc" step="0.1" min="0" max="5" placeholder="Ex. 2.5" required>
+      <label for="gender">Genre</label>
+      <select id="gender" name="gender" required>
+        <option value="">Sélectionnez</option>
+        <option value="Male">Homme</option>
+        <option value="Female">Femme</option>
+      </select>
+
+      <label for="height">Taille (m)</label>
+      <input type="number" id="height" name="height" step="0.01" min="0.5" max="2.5" placeholder="Ex. 1.70" required>
 
       <label for="weight">Poids (kg)</label>
       <input type="number" id="weight" name="weight" step="0.1" min="20" max="300" placeholder="Ex. 70" required>
 
-      <label for="height">Taille (cm)</label>
-      <input type="number" id="height" name="height" step="0.1" min="50" max="250" placeholder="Ex. 170" required>
+      <label for="family_history_with_overweight">Antécédents familiaux de surpoids</label>
+      <select id="family_history_with_overweight" name="family_history_with_overweight" required>
+        <option value="">Sélectionnez</option>
+        <option value="yes">Oui</option>
+        <option value="no">Non</option>
+      </select>
+
+      <label for="favc">Consommation fréquente d'aliments caloriques</label>
+      <select id="favc" name="favc" required>
+        <option value="">Sélectionnez</option>
+        <option value="yes">Oui</option>
+        <option value="no">Non</option>
+      </select>
+
+      <label for="fcvc">Fréquence de consommation de légumes (1-3)</label>
+      <input type="number" id="fcvc" name="fcvc" step="0.1" min="1" max="3" placeholder="Ex. 2.5" required>
+
+      <label for="ncp">Nombre de repas principaux (1-8)</label>
+      <input type="number" id="ncp" name="ncp" min="1" max="8" placeholder="Ex. 3" required>
+
+      <label for="caec">Consommation d'aliments entre les repas</label>
+      <select id="caec" name="caec" required>
+        <option value="">Sélectionnez</option>
+        <option value="no">Jamais</option>
+        <option value="sometimes">Parfois</option>
+        <option value="frequently">Souvent</option>
+        <option value="always">Toujours</option>
+      </select>
+
+      <label for="smoke">Fumez-vous ?</label>
+      <select id="smoke" name="smoke" required>
+        <option value="">Sélectionnez</option>
+        <option value="yes">Oui</option>
+        <option value="no">Non</option>
+      </select>
+
+      <label for="ch2o">Consommation d'eau quotidienne (0-10)</label>
+      <input type="number" id="ch2o" name="ch2o" step="0.1" min="0" max="10" placeholder="Ex. 2.5" required>
+
+      <label for="scc">Surveillance des calories</label>
+      <select id="scc" name="scc" required>
+        <option value="">Sélectionnez</option>
+        <option value="yes">Oui</option>
+        <option value="no">Non</option>
+      </select>
+
+      <label for="faf">Fréquence d'activité physique (0-7)</label>
+      <input type="number" id="faf" name="faf" step="0.1" min="0" max="7" placeholder="Ex. 1.5" required>
+
+      <label for="tue">Temps d'utilisation d'appareils technologiques (0-24)</label>
+      <input type="number" id="tue" name="tue" step="0.1" min="0" max="24" placeholder="Ex. 2.5" required>
+
+      <label for="cal">Consommation d'alcool (0-3)</label>
+      <input type="number" id="cal" name="cal" min="0" max="3" placeholder="Ex. 0" required>
+
+      <label for="mtrans">Moyen de transport</label>
+      <select id="mtrans" name="mtrans" required>
+        <option value="">Sélectionnez</option>
+        <option value="Public_Transportation">Transport public</option>
+        <option value="Automobile">Voiture</option>
+        <option value="Walking">Marche</option>
+        <option value="Bike">Vélo</option>
+        <option value="Motorbike">Moto</option>
+      </select>
 
       <!-- Boutons -->
       <div style="margin-top:15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -290,51 +359,92 @@
     const dateMin = document.getElementById("date-min");
     const dateMax = document.getElementById("date-max");
     let chart;
-    let history = JSON.parse(localStorage.getItem('predictionsHistory')) || [];
+    let history = [];
 
-    function saveHistory() {
-      localStorage.setItem('predictionsHistory', JSON.stringify(history));
+    // Charger l'historique depuis l'API
+    async function loadHistory() {
+      try {
+        history = await getHistory();
+        renderHistory();
+      } catch (err) {
+        console.error('Erreur lors du chargement de l\'historique:', err);
+      }
     }
 
-    function calculatePrediction(age, fcvc, weight, height) {
-      const imc = weight / ((height / 100) ** 2);
-      let probability = Math.min(Math.max((imc / 40 + fcvc / 5 + age / 100) / 3, 0), 1);
-      let result = probability < 0.5 ? "Sain" : probability < 0.75 ? "Surpoids" : "Obèse";
-      return { result, probability: (probability * 100).toFixed(1), age, fcvc, weight, height, date: new Date().toISOString().split('T')[0] };
-    }
-
-    function showResult(pred) {
-      let className = pred.result === "Sain" ? "result-sain" :
-        pred.result === "Surpoids" ? "result-surpoids" : "result-obese";
+    function showResult(predictionResult) {
+      const result = predictionResult.result;
+      const probabilities = predictionResult.probability;
+      
+      // Trouver la probabilité la plus élevée
+      const maxProb = Math.max(...Object.values(probabilities));
+      const maxProbKey = Object.keys(probabilities).find(key => probabilities[key] === maxProb);
+      
+      let className = result.includes("Obese") ? "result-obese" :
+        result.includes("Overweight") ? "result-surpoids" : "result-sain";
+      
       resultDiv.className = className;
-      resultDiv.textContent = `Résultat : ${pred.result} - Probabilité : ${pred.probability}%`;
+      resultDiv.innerHTML = `
+        <h3>Résultat de la prédiction</h3>
+        <p><strong>Classification :</strong> ${result}</p>
+        <p><strong>Probabilité la plus élevée :</strong> ${(maxProb * 100).toFixed(1)}% (${maxProbKey})</p>
+        <div style="margin-top: 10px;">
+          <h4>Détail des probabilités :</h4>
+          ${Object.entries(probabilities).map(([key, value]) => 
+            `<p>${key}: ${(value * 100).toFixed(1)}%</p>`
+          ).join('')}
+        </div>
+      `;
 
-      if (pred.result === "Obèse" && pred.probability > 90) alert("⚠️ Attention : probabilité élevée d'obésité !");
+      if (result.includes("Obese") && maxProb > 0.9) {
+        alert("⚠️ Attention : probabilité élevée d'obésité !");
+      }
 
+      // Mettre à jour le graphique
       const ctx = document.getElementById('probChart').getContext('2d');
       if (chart) chart.destroy();
+      
+      const labels = Object.keys(probabilities);
+      const data = Object.values(probabilities).map(v => v * 100);
+      
       chart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Probabilité', 'Complément'],
-          datasets: [{ data: [pred.probability, 100 - pred.probability], backgroundColor: ['#F44336', '#e0e0e0'] }]
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: ['#F44336', '#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#FF5722', '#607D8B']
+          }]
         },
-        options: { responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Probabilité d\'obésité (%)' } } }
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            title: { display: true, text: 'Probabilités de classification (%)' }
+          }
+        }
       });
     }
 
     function renderHistory(data = history) {
       tableBody.innerHTML = "";
+      if (!data || data.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='7'>Aucune prédiction trouvée</td></tr>";
+        return;
+      }
+      
       data.forEach(pred => {
         const tr = document.createElement("tr");
+        const payload = JSON.parse(pred.payload || '{}');
+        const date = new Date(pred.created_at).toLocaleDateString();
+        
         tr.innerHTML = `
-        <td>${pred.date}</td>
-        <td>${pred.age}</td>
-        <td>${pred.fcvc}</td>
-        <td>${pred.weight}</td>
-        <td>${pred.height}</td>
-        <td class="${pred.result === 'Obèse' ? 'result-obese' : pred.result === 'Surpoids' ? 'result-surpoids' : 'result-sain'}">${pred.result}</td>
-        <td>${pred.probability}%</td>
+        <td>${date}</td>
+        <td>${payload.age || '-'}</td>
+        <td>${payload.fcvc || '-'}</td>
+        <td>${payload.weight || '-'}</td>
+        <td>${payload.height || '-'}</td>
+        <td class="${pred.result.includes('Obese') ? 'result-obese' : pred.result.includes('Overweight') ? 'result-surpoids' : 'result-sain'}">${pred.result}</td>
+        <td>${(pred.probability * 100).toFixed(1)}%</td>
       `;
         tableBody.appendChild(tr);
       });
@@ -345,8 +455,10 @@
       const minDate = dateMin.value ? new Date(dateMin.value) : null;
       const maxDate = dateMax.value ? new Date(dateMax.value) : null;
       const filtered = history.filter(p => {
-        const matchesSearch = p.result.toLowerCase().includes(searchTerm) || String(p.age).includes(searchTerm);
-        const dateObj = new Date(p.date);
+        const payload = JSON.parse(p.payload || '{}');
+        const matchesSearch = p.result.toLowerCase().includes(searchTerm) || 
+                             String(payload.age || '').includes(searchTerm);
+        const dateObj = new Date(p.created_at);
         const matchesDate = (!minDate || dateObj >= minDate) && (!maxDate || dateObj <= maxDate);
         return matchesSearch && matchesDate;
       });
@@ -363,7 +475,9 @@
     function exportCSV() {
       let csv = "Date,Âge,FCVC,Poids,Taille,Résultat,Probabilité\n";
       history.forEach(p => {
-        csv += `${p.date},${p.age},${p.fcvc},${p.weight},${p.height},${p.result},${p.probability}\n`;
+        const payload = JSON.parse(p.payload || '{}');
+        const date = new Date(p.created_at).toLocaleDateString();
+        csv += `${date},${payload.age || '-'},${payload.fcvc || '-'},${payload.weight || '-'},${payload.height || '-'},${p.result},${(p.probability * 100).toFixed(1)}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
@@ -374,18 +488,57 @@
       URL.revokeObjectURL(url);
     }
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const pred = calculatePrediction(
-        parseFloat(form.age.value),
-        parseFloat(form.fcvc.value),
-        parseFloat(form.weight.value),
-        parseFloat(form.height.value)
-      );
-      history.unshift(pred); // ajouter en début
-      saveHistory();
-      showResult(pred);
-      renderHistory();
+      
+      // Vérifier si l'utilisateur est connecté
+      const token = getToken();
+      if (!token) {
+        alert('❌ Vous devez être connecté pour faire une prédiction. Redirection vers la page de connexion...');
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      // Afficher le spinner de chargement
+      const submitBtn = document.getElementById('submit-btn');
+      const spinner = document.getElementById('loading-spinner');
+      submitBtn.disabled = true;
+      spinner.style.display = 'inline-flex';
+      
+      const formData = new FormData(form);
+      const predictionData = {
+        age: parseInt(formData.get('age')),
+        gender: formData.get('gender'),
+        height: parseFloat(formData.get('height')),
+        weight: parseFloat(formData.get('weight')),
+        family_history_with_overweight: formData.get('family_history_with_overweight'),
+        favc: formData.get('favc'),
+        fcvc: parseFloat(formData.get('fcvc')),
+        ncp: parseInt(formData.get('ncp')),
+        caec: formData.get('caec'),
+        smoke: formData.get('smoke'),
+        ch2o: parseFloat(formData.get('ch2o')),
+        scc: formData.get('scc'),
+        faf: parseFloat(formData.get('faf')),
+        tue: parseFloat(formData.get('tue')),
+        cal: parseInt(formData.get('cal')),
+        mtrans: formData.get('mtrans')
+      };
+
+      try {
+        console.log('Envoi des données de prédiction:', predictionData);
+        const result = await sendPrediction(predictionData);
+        console.log('Résultat reçu:', result);
+        showResult(result);
+        await loadHistory(); // Recharger l'historique
+      } catch (err) {
+        console.error('Erreur lors de la prédiction:', err);
+        alert('❌ Erreur lors de la prédiction: ' + err.message);
+      } finally {
+        // Masquer le spinner et réactiver le bouton
+        submitBtn.disabled = false;
+        spinner.style.display = 'none';
+      }
     });
 
     resetBtn.addEventListener('click', () => {
@@ -394,31 +547,16 @@
       if (chart) chart.destroy();
     });
 
-    renderHistory();
-  </script>
-  <script>
-    const form = document.getElementById("prediction-form");
-    const submitBtn = document.getElementById("submit-btn");
-    const spinner = document.getElementById("loading-spinner");
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      // Désactiver le bouton et afficher le spinner
-      submitBtn.disabled = true;
-      spinner.style.display = "inline-flex";
-
-      // Simulation d'appel API (2s)
-      setTimeout(() => {
-        document.getElementById("prediction-result").innerHTML =
-          "<p><strong>Résultat :</strong> Risque faible de diabète ✅</p>";
-
-        // Réactiver le bouton et cacher le spinner
-        submitBtn.disabled = false;
-        spinner.style.display = "none";
-      }, 2000);
+    // Vérifier l'authentification et charger l'historique au chargement de la page
+    window.addEventListener('load', () => {
+      const token = getToken();
+      if (!token) {
+        alert('❌ Vous devez être connecté pour accéder à cette page. Redirection...');
+        window.location.href = 'index.html';
+        return;
+      }
+      loadHistory();
     });
-
   </script>
 </body>
 

@@ -91,15 +91,28 @@
     </header>
 
     <form id="register-form">
-      <input type="text" name="username" placeholder="Nom d'utilisateur" required>
+      <input type="text" name="full_name" placeholder="Nom complet" required>
       <input type="email" name="email" placeholder="Email" required>
       <input type="password" name="password" placeholder="Mot de passe" required>
-      <button type="submit">S’inscrire</button>
+      <button type="submit">S'inscrire</button>
     </form>
 
     <p>Déjà un compte ? <a href="index.html">Se connecter</a></p>
   </main>
 
   <script src="js/app.js"></script>
+  <script>
+    // Gestion du formulaire d'inscription
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const fullName = formData.get('full_name');
+      const email = formData.get('email');
+      const password = formData.get('password');
+      
+      await registerUser(email, password, fullName);
+    });
+  </script>
 </body>
 </html>

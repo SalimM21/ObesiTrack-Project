@@ -18,9 +18,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         raise HTTPException(status_code=401, detail="Token invalide")
 
     async with async_session() as session:
-        q = select(User).where(User.id == payload.get("user_id"))
-        r = await session.exec(q)
-        user = r.one_or_none()
+        q = select(User).where(User.email == payload.get("sub"))
+        result = await session.execute(q)
+        user = result.scalar_one_or_none()
 
         if not user:
             raise HTTPException(status_code=401, detail="Utilisateur introuvable")

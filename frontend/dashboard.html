@@ -252,30 +252,40 @@
   <!-- ===== SCRIPT ===== -->
   <script>
     // ------------------ DONNÉES ------------------
-    const predictions = [
-      { date: "2025-01-12", age: 25, fcvc: 2, result: "Sain", probability: 0.85 },
-      { date: "2025-02-18", age: 40, fcvc: 1, result: "Surpoids", probability: 0.67 },
-      { date: "2025-03-03", age: 32, fcvc: 3, result: "Obèse", probability: 0.92 },
-      { date: "2025-03-22", age: 28, fcvc: 2, result: "Sain", probability: 0.78 },
-      { date: "2025-04-10", age: 35, fcvc: 1, result: "Surpoids", probability: 0.59 },
-      { date: "2025-04-25", age: 45, fcvc: 3, result: "Obèse", probability: 0.95 },
-      { date: "2025-05-15", age: 30, fcvc: 2, result: "Sain", probability: 0.88 },
-      { date: "2025-05-30", age: 50, fcvc: 1, result: "Surpoids", probability: 0.70 },
-      { date: "2025-06-05", age: 38, fcvc: 3, result: "Obèse", probability: 0.91 },
-      { date: "2025-06-20", age: 27, fcvc: 2, result: "Sain", probability: 0.82 }
-    ];
+    let predictions = [];
 
     const tableBody = document.querySelector("#history-table tbody");
 
+    // Charger les prédictions depuis l'API
+    async function loadPredictions() {
+      try {
+        predictions = await getHistory();
+        renderHistory();
+        renderCharts(predictions);
+      } catch (err) {
+        console.error('Erreur lors du chargement des prédictions:', err);
+        predictions = [];
+        renderHistory();
+      }
+    }
+
     function renderHistory(data = predictions) {
       tableBody.innerHTML = "";
+      if (!data || data.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='5'>Aucune prédiction trouvée</td></tr>";
+        return;
+      }
+      
       data.forEach(pred => {
         const tr = document.createElement("tr");
+        const payload = JSON.parse(pred.payload || '{}');
+        const date = new Date(pred.created_at).toLocaleDateString();
+        
         tr.innerHTML = `
-          <td>${pred.date}</td>
-          <td>${pred.age}</td>
-          <td>${pred.fcvc}</td>
-          <td class="${pred.result === 'Obèse' ? 'result-1' : 'result-0'}">${pred.result}</td>
+          <td>${date}</td>
+          <td>${payload.age || '-'}</td>
+          <td>${payload.fcvc || '-'}</td>
+          <td class="${pred.result.includes('Obese') ? 'result-1' : 'result-0'}">${pred.result}</td>
           <td>${(pred.probability * 100).toFixed(1)}%</td>
         `;
         tableBody.appendChild(tr);
@@ -292,8 +302,11 @@
       const minDate = dateMin.value ? new Date(dateMin.value) : null;
       const maxDate = dateMax.value ? new Date(dateMax.value) : null;
       const filtered = predictions.filter(p => {
-        const matchesSearch = p.result.toLowerCase().includes(searchTerm) || String(p.age).includes(searchTerm) || String(p.fcvc).includes(searchTerm);
-        const dateObj = new Date(p.date);
+        const payload = JSON.parse(p.payload || '{}');
+        const matchesSearch = p.result.toLowerCase().includes(searchTerm) || 
+                             String(payload.age || '').includes(searchTerm) || 
+                             String(payload.fcvc || '').includes(searchTerm);
+        const dateObj = new Date(p.created_at);
         const matchesDate = (!minDate || dateObj >= minDate) && (!maxDate || dateObj <= maxDate);
         return matchesSearch && matchesDate;
       });
@@ -305,7 +318,11 @@
 
     function exportCSV() {
       let rows = [["Date", "Âge", "FCVC", "Résultat", "Probabilité"]];
-      predictions.forEach(p => rows.push([p.date, p.age, p.fcvc, p.result, (p.probability * 100).toFixed(1) + "%"]));
+      predictions.forEach(p => {
+        const payload = JSON.parse(p.payload || '{}');
+        const date = new Date(p.created_at).toLocaleDateString();
+        rows.push([date, payload.age || '-', payload.fcvc || '-', p.result, (p.probability * 100).toFixed(1) + "%"]);
+      });
       let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
       const link = document.createElement("a"); link.setAttribute("href", csvContent); link.setAttribute("download", "historique_predictions.csv"); document.body.appendChild(link); link.click();
     }
@@ -316,22 +333,34 @@
       if (currentSort.key === key) currentSort.asc = !currentSort.asc;
       else { currentSort.key = key; currentSort.asc = true; }
       const sorted = [...predictions].sort((a, b) => {
-        let valA = key === "date" ? new Date(a[key]) : a[key];
-        let valB = key === "date" ? new Date(b[key]) : b[key];
+        let valA, valB;
+        if (key === "date") {
+          valA = new Date(a.created_at);
+          valB = new Date(b.created_at);
+        } else if (key === "age") {
+          const payloadA = JSON.parse(a.payload || '{}');
+          const payloadB = JSON.parse(b.payload || '{}');
+          valA = payloadA.age || 0;
+          valB = payloadB.age || 0;
+        } else {
+          valA = a[key] || 0;
+          valB = b[key] || 0;
+        }
         return (valA < valB ? -1 : valA > valB ? 1 : 0) * (currentSort.asc ? 1 : -1);
       });
       renderHistory(sorted);
     }
 
-    renderHistory();
+    // Charger les prédictions au chargement de la page
+    loadPredictions();
 
     // ------------------ GRAPHIQUES ------------------
     function filterByPeriod(period) {
       if (period === "all") return predictions;
-      const now = new Date("2025-06-30");
+      const now = new Date();
       const months = parseInt(period.replace('m', ''));
       const cutoff = new Date(now.setMonth(now.getMonth() - months));
-      return predictions.filter(p => new Date(p.date) >= cutoff);
+      return predictions.filter(p => new Date(p.created_at) >= cutoff);
     }
 
     function renderCharts(data) {
@@ -343,7 +372,7 @@
       new Chart(document.getElementById("chartProbabilities"), {
         type: "line",
         data: {
-          labels: data.map(p => p.date),
+          labels: data.map(p => new Date(p.created_at).toLocaleDateString()),
           datasets: [{
             label: "Probabilité prédite (%)",
             data: data.map(p => (p.probability * 100).toFixed(1)),
@@ -359,8 +388,11 @@
       });
 
       // Histogramme - Répartition des âges par résultat
-      const results = ["Sain", "Surpoids", "Obèse"];
-      const ageGroups = results.map(r => data.filter(p => p.result === r).map(p => p.age));
+      const results = [...new Set(data.map(p => p.result))];
+      const ageGroups = results.map(r => data.filter(p => p.result === r).map(p => {
+        const payload = JSON.parse(p.payload || '{}');
+        return payload.age || 0;
+      }));
       new Chart(document.getElementById("chartAgeHistogram"), {
         type: "bar",
         data: {
@@ -385,13 +417,19 @@
           datasets: [
             {
               label: "Âge",
-              data: data.map(p => p.age),
+              data: data.map(p => {
+                const payload = JSON.parse(p.payload || '{}');
+                return payload.age || 0;
+              }),
               borderColor: "#FF6384",
               fill: false
             },
             {
               label: "FCVC",
-              data: data.map(p => p.fcvc),
+              data: data.map(p => {
+                const payload = JSON.parse(p.payload || '{}');
+                return payload.fcvc || 0;
+              }),
               borderColor: "#36A2EB",
               fill: false
             },
@@ -417,8 +455,7 @@
       renderCharts(filteredData);
     });
 
-    // Initial render
-    renderCharts(predictions);
+    // Initial render sera fait par loadPredictions()
 
     // ------------------ BOUTON STATISTIQUES ------------------
     const btnShowStats = document.getElementById("btnShowStats");

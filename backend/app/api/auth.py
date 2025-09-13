@@ -12,8 +12,8 @@ router = APIRouter(tags=["auth"])
 async def signup(payload: UserCreate):
     async with async_session() as session:
         q = select(User).where(User.email == payload.email)
-        r = await session.exec(q)
-        if r.first():
+        result = await session.execute(q)
+        if result.first():
             raise HTTPException(status_code=400, detail="Email déjà enregistré")
         
         user = User(
@@ -35,8 +35,8 @@ async def signup(payload: UserCreate):
 async def login(payload: UserCreate):
     async with async_session() as session:
         q = select(User).where(User.email == payload.email)
-        r = await session.exec(q)
-        user = r.one_or_none()
+        result = await session.execute(q)
+        user = result.scalar_one_or_none()
 
         if not user or not verify_password(payload.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Identifiants incorrects")

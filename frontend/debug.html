@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - ObesiTrack</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 3px; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug ObesiTrack</h1>
+    
+    <div class="section info">
+        <h3>📊 État actuel</h3>
+        <div id="status">Chargement...</div>
+    </div>
+
+    <div class="section">
+        <h3>🔐 Test d'authentification</h3>
+        <input type="email" id="email" placeholder="Email" value="test@example.com">
+        <input type="password" id="password" placeholder="Mot de passe" value="test123">
+        <button onclick="testLogin()">Se connecter</button>
+        <button onclick="testLogout()">Se déconnecter</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="section">
+        <h3>🔮 Test de prédiction</h3>
+        <button onclick="testPrediction()">Tester une prédiction</button>
+        <div id="prediction-result"></div>
+    </div>
+
+    <div class="section">
+        <h3>📋 Test d'historique</h3>
+        <button onclick="testHistory()">Charger l'historique</button>
+        <div id="history-result"></div>
+    </div>
+
+    <div class="section">
+        <h3>📝 Logs de débogage</h3>
+        <button onclick="clearLogs()">Effacer les logs</button>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Fonction de logging
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.textContent += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').textContent = '';
+        }
+
+        // Mise à jour du statut
+        function updateStatus() {
+            const token = getToken();
+            const statusDiv = document.getElementById('status');
+            
+            if (token) {
+                statusDiv.innerHTML = `
+                    <strong>✅ Connecté</strong><br>
+                    Token: ${token.substring(0, 30)}...<br>
+                    Longueur: ${token.length} caractères
+                `;
+                statusDiv.parentElement.className = 'section success';
+            } else {
+                statusDiv.innerHTML = '<strong>❌ Non connecté</strong>';
+                statusDiv.parentElement.className = 'section error';
+            }
+        }
+
+        // Test de connexion
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('auth-result');
+            
+            log(`🔐 Tentative de connexion: ${email}`);
+            
+            try {
+                await loginUser(email, password);
+                resultDiv.innerHTML = '<strong>✅ Connexion réussie</strong>';
+                resultDiv.parentElement.className = 'section success';
+                updateStatus();
+            } catch (error) {
+                log(`❌ Erreur de connexion: ${error.message}`);
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'section error';
+            }
+        }
+
+        // Test de déconnexion
+        function testLogout() {
+            log('🚪 Déconnexion...');
+            logoutUser();
+            updateStatus();
+            document.getElementById('auth-result').innerHTML = '<strong>✅ Déconnecté</strong>';
+        }
+
+        // Test de prédiction
+        async function testPrediction() {
+            const resultDiv = document.getElementById('prediction-result');
+            
+            const testData = {
+                age: 25,
+                gender: "Male",
+                height: 1.75,
+                weight: 70,
+                family_history_with_overweight: "no",
+                favc: "no",
+                fcvc: 2.5,
+                ncp: 3,
+                caec: "sometimes",
+                smoke: "no",
+                ch2o: 2.5,
+                scc: "no",
+                faf: 1.5,
+                tue: 2.5,
+                cal: 0,
+                mtrans: "Public_Transportation"
+            };
+            
+            log('🔮 Test de prédiction...');
+            log(`Données: ${JSON.stringify(testData, null, 2)}`);
+            
+            try {
+                const result = await sendPrediction(testData);
+                log(`✅ Prédiction réussie: ${JSON.stringify(result, null, 2)}`);
+                resultDiv.innerHTML = `
+                    <strong>✅ Prédiction réussie</strong><br>
+                    Résultat: ${result.result}<br>
+                    Probabilités: ${JSON.stringify(result.probability, null, 2)}
+                `;
+                resultDiv.parentElement.className = 'section success';
+            } catch (error) {
+                log(`❌ Erreur de prédiction: ${error.message}`);
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'section error';
+            }
+        }
+
+        // Test d'historique
+        async function testHistory() {
+            const resultDiv = document.getElementById('history-result');
+            
+            log('📋 Test de chargement de l\'historique...');
+            
+            try {
+                const history = await getHistory();
+                log(`✅ Historique chargé: ${history.length} prédictions`);
+                resultDiv.innerHTML = `
+                    <strong>✅ Historique chargé</strong><br>
+                    Nombre de prédictions: ${history.length}<br>
+                    <pre>${JSON.stringify(history, null, 2)}</pre>
+                `;
+                resultDiv.parentElement.className = 'section success';
+            } catch (error) {
+                log(`❌ Erreur d'historique: ${error.message}`);
+                resultDiv.innerHTML = `<strong>❌ Erreur:</strong> ${error.message}`;
+                resultDiv.parentElement.className = 'section error';
+            }
+        }
+
+        // Initialisation
+        window.addEventListener('load', () => {
+            log('🚀 Page de debug chargée');
+            updateStatus();
+        });
+    </script>
+</body>
+</html>
