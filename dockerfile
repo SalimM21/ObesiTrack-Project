@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copier deps depuis builder
 COPY --from=builder /wheels /wheels
-COPY --from=builder /requirements.txt .
+# COPY --from=builder /requirements.txt .
 RUN pip install --no-cache /wheels/*
 
 # Copier code source
